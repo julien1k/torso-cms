@@ -1,6 +1,7 @@
 packages:
   - "."
   - "examples/*"
+  - "video"
 ignoredBuiltDependencies:
   - sharp
   - unrs-resolver
