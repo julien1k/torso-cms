@@ -1,0 +1,243 @@
+import { createLimiter, createSession, passwordMatches, readCookie, SESSION_COOKIE, sessionSecret, verifySession } from './auth'
+import { mountEditor } from './client/editor'
+import { resolveDom } from './client/resolve'
+import { GitHubError, saveToGitHub, type Editor, type GitHubOptions } from './github'
+import { clientManifest, readBuildManifest, scanProject, type ClientManifest } from './manifest'
+import { saveToDisk, type Edit } from './save'
+import { loginHtml, shellHtml } from './shell'
+
+export { analyze } from './analyze'
+export { scanProject, clientManifest } from './manifest'
+export { applyEdits, saveToDisk } from './save'
+export { saveToGitHub } from './github'
+export type { Edit, SaveResult } from './save'
+export type { Editor, GitHubOptions } from './github'
+
+export interface CreateCMSOptions {
+  /** Project root. Defaults to the directory `next` is run from. */
+  root?: string
+  /**
+   * Built-in password login. Defaults to the `CMS_PASSWORD` environment variable.
+   * Visitors without a session get a password prompt at the edit URL.
+   */
+  password?: string
+  /** Signs the session cookie. Defaults to `CMS_SECRET`, or a value derived from the password. */
+  secret?: string
+  /**
+   * Reuse your app's own login instead of a password: return true for people who may edit.
+   * Everyone else gets the site's normal 404 page, so the edit URL stays hidden.
+   * Return `{ name, email }` instead of `true` and that person becomes the author of the
+   * commits their saves create.
+   */
+  authorize?: (req: Request) => boolean | Editor | Promise<boolean | Editor>
+  /**
+   * Where production saves are committed. Defaults to `CMS_GITHUB_REPO`, `CMS_GITHUB_BRANCH`
+   * and `CMS_GITHUB_TOKEN`; on Vercel the repo and branch of the deployment are used.
+   * Set `mode: "pull-request"` (or `CMS_GITHUB_MODE=pull-request`) to collect saves in a
+   * pull request instead of committing each one to the deploy branch.
+   */
+  github?: Partial<GitHubOptions>
+}
+
+type RouteContext = { params?: Promise<Record<string, string | string[] | undefined>> }
+type Access = 'ok' | 'login' | 'hidden'
+
+/** Path segment that separates the editor's own endpoints from site paths. */
+const API = '_cms'
+
+const noStore = { 'cache-control': 'no-store' }
+const json = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json', ...noStore } })
+const html = (body: string, status = 200, headers: Record<string, string> = {}) =>
+  new Response(body, { status, headers: { 'content-type': 'text/html; charset=utf-8', ...noStore, ...headers } })
+const redirect = (to: string, headers: Record<string, string> = {}) =>
+  new Response(null, { status: 303, headers: { location: to, ...noStore, ...headers } })
+
+/**
+ * Route handlers for the edit URL. Mount once, in a catch-all route:
+ *
+ *   // app/edit/[[...path]]/route.ts
+ *   export const { GET, POST } = createCMS()
+ *
+ * `/edit/pricing` then opens `/pricing` in the editor.
+ *
+ * In development, saving writes the source files on disk. In production it commits to
+ * GitHub, and the editor is only reachable when a password or `authorize` is configured.
+ */
+export function createCMS(options: CreateCMSOptions = {}) {
+  const root = options.root ?? process.cwd()
+  const limiter = createLimiter()
+  const isDev = () => process.env.NODE_ENV === 'development'
+  const password = () => options.password ?? process.env.CMS_PASSWORD ?? ''
+
+  function github(): GitHubOptions | null {
+    const env = process.env
+    const vercelRepo = env.VERCEL_GIT_REPO_OWNER && env.VERCEL_GIT_REPO_SLUG ? `${env.VERCEL_GIT_REPO_OWNER}/${env.VERCEL_GIT_REPO_SLUG}` : ''
+    const repo = options.github?.repo ?? env.CMS_GITHUB_REPO ?? vercelRepo
+    const token = options.github?.token ?? env.CMS_GITHUB_TOKEN ?? ''
+    const branch = options.github?.branch ?? env.CMS_GITHUB_BRANCH ?? env.VERCEL_GIT_COMMIT_REF ?? 'main'
+    if (!repo || !token) return null
+    const wanted = options.github?.mode ?? env.CMS_GITHUB_MODE
+    const mode = wanted === 'pull-request' || wanted === 'pr' ? 'pull-request' : 'commit'
+    return { ...options.github, repo, token, branch, mode, apiUrl: options.github?.apiUrl ?? env.CMS_GITHUB_API_URL }
+  }
+
+  async function locate(req: Request, ctx?: RouteContext) {
+    const url = new URL(req.url)
+    const params = (await ctx?.params) ?? {}
+    const value = Object.values(params)[0]
+    const segments = value == null ? [] : Array.isArray(value) ? value : [value]
+    const parts = url.pathname.replace(/\/+$/, '').split('/')
+    // The mount point is whatever precedes the catch-all segments.
+    const base = parts.slice(0, parts.length - segments.length).join('/')
+    return { url, segments, base, api: `${base}/${API}` }
+  }
+
+  /** Who is behind a request, when `authorize` said so. */
+  const editors = new WeakMap<Request, Editor>()
+
+  async function access(req: Request): Promise<Access> {
+    if (options.authorize) {
+      try {
+        const answer = await options.authorize(req)
+        if (answer && typeof answer === 'object' && typeof answer.name === 'string' && answer.name.trim()) {
+          editors.set(req, { name: answer.name.trim(), email: typeof answer.email === 'string' ? answer.email : undefined })
+          return 'ok'
+        }
+        return answer === true ? 'ok' : 'hidden'
+      } catch {
+        return 'hidden'
+      }
+    }
+    const pass = password()
+    if (pass) return verifySession(sessionSecret(pass, options.secret ?? process.env.CMS_SECRET), readCookie(req, SESSION_COOKIE)) ? 'ok' : 'login'
+    // Nothing configured: open on the developer's machine, closed everywhere else.
+    return isDev() ? 'ok' : 'hidden'
+  }
+
+  let notFoundPage: { body: string; type: string; at: number } | null = null
+  /** Answer exactly like a page that does not exist, by asking the site for one. */
+  async function hidden(req: Request): Promise<Response> {
+    try {
+      if (!notFoundPage || Date.now() - notFoundPage.at > 60_000) {
+        const probe = new URL(`/_not-found-${Math.random().toString(36).slice(2)}`, req.url)
+        const res = await fetch(probe, { signal: AbortSignal.timeout(3000), cache: 'no-store' })
+        if (res.status !== 404) throw new Error('unexpected')
+        notFoundPage = { body: await res.text(), type: res.headers.get('content-type') ?? 'text/html; charset=utf-8', at: Date.now() }
+      }
+      return new Response(notFoundPage.body, { status: 404, headers: { 'content-type': notFoundPage.type } })
+    } catch {
+      return new Response('Not found', { status: 404 })
+    }
+  }
+
+  function sameOrigin(req: Request): boolean {
+    const origin = req.headers.get('origin')
+    if (!origin) return isDev()
+    try {
+      const host = new URL(origin).host
+      return host === req.headers.get('host') || host === req.headers.get('x-forwarded-host') || host === new URL(req.url).host
+    } catch {
+      return false
+    }
+  }
+
+  function manifest(): ClientManifest | null {
+    return isDev() ? clientManifest(scanProject(root)) : readBuildManifest(root)
+  }
+
+  async function GET(req: Request, ctx?: RouteContext): Promise<Response> {
+    const who = await access(req)
+    if (who === 'hidden') return hidden(req)
+    const { url, segments, base, api } = await locate(req, ctx)
+
+    if (segments[0] !== API) {
+      if (who === 'login') return html(loginHtml({ action: `${api}/login`, next: url.pathname + url.search }), 401)
+      const start = `/${segments.map(encodeURIComponent).join('/')}${url.search}`
+      return html(shellHtml({ base, api, start }))
+    }
+    if (segments[1] === 'login') return redirect(base || '/')
+    if (who === 'login') return json({ error: 'signed out' }, 401)
+    switch (segments[1]) {
+      case 'manifest': {
+        const data = manifest()
+        return data ? json(data) : json({ error: 'No manifest found. It is written by `next build` when next.config uses withCMS().' }, 500)
+      }
+      case 'editor.js': {
+        const body = `window.__cmsEditor=(${mountEditor.toString()})(${resolveDom.toString()},window.__cmsConfig);`
+        return new Response(body, { headers: { 'content-type': 'text/javascript; charset=utf-8', ...noStore } })
+      }
+      default:
+        return new Response('Not found', { status: 404 })
+    }
+  }
+
+  async function login(req: Request, base: string, api: string): Promise<Response> {
+    const pass = password()
+    if (!pass || options.authorize) return hidden(req)
+    const form = await req.formData().catch(() => null)
+    const given = String(form?.get('password') ?? '')
+    const wanted = String(form?.get('next') ?? '')
+    const next = wanted === base || wanted.startsWith(`${base}/`) ? wanted : base || '/'
+    const ip = (req.headers.get('x-forwarded-for') ?? '').split(',')[0].trim() || 'local'
+
+    if (limiter.blocked(ip)) {
+      return html(loginHtml({ action: `${api}/login`, next, error: 'Too many attempts. Try again in a few minutes.' }), 429)
+    }
+    if (!passwordMatches(given, pass)) {
+      limiter.fail(ip)
+      await new Promise((resolve) => setTimeout(resolve, 400))
+      return html(loginHtml({ action: `${api}/login`, next, error: 'That password is not correct.' }), 401)
+    }
+    limiter.clear(ip)
+    const session = createSession(sessionSecret(pass, options.secret ?? process.env.CMS_SECRET))
+    const secure = new URL(req.url).protocol === 'https:' || req.headers.get('x-forwarded-proto') === 'https'
+    const cookie = `${SESSION_COOKIE}=${session.value}; Path=${base || '/'}; Max-Age=${session.maxAge}; HttpOnly; SameSite=Lax${secure ? '; Secure' : ''}`
+    return redirect(next, { 'set-cookie': cookie })
+  }
+
+  async function POST(req: Request, ctx?: RouteContext): Promise<Response> {
+    const { segments, base, api } = await locate(req, ctx)
+    if (segments[0] !== API) return hidden(req)
+    // A page on another origin must never be able to sign in or write on someone's behalf.
+    if (!sameOrigin(req)) return json({ error: 'cross-origin' }, 403)
+
+    if (segments[1] === 'login') return login(req, base, api)
+    if (segments[1] === 'logout') {
+      return redirect('/', { 'set-cookie': `${SESSION_COOKIE}=; Path=${base || '/'}; Max-Age=0; HttpOnly; SameSite=Lax` })
+    }
+
+    const who = await access(req)
+    if (who === 'hidden') return hidden(req)
+    if (who === 'login') return json({ error: 'signed out' }, 401)
+    if (segments[1] !== 'save') return new Response('Not found', { status: 404 })
+    if (!(req.headers.get('content-type') ?? '').includes('application/json')) return json({ error: 'expected json' }, 415)
+
+    let edits: Edit[]
+    try {
+      const body = await req.json()
+      edits = body?.edits
+      if (!Array.isArray(edits) || edits.length > 500) throw new Error()
+    } catch {
+      return json({ error: 'expected { edits: [{ id, from, to }] }' }, 400)
+    }
+
+    if (isDev()) {
+      const result = saveToDisk(root, edits)
+      return json({ mode: 'disk', ...result }, result.conflicts.length ? 409 : 200)
+    }
+    const gh = github()
+    if (!gh) return json({ error: 'Saving is not set up: set CMS_GITHUB_REPO and CMS_GITHUB_TOKEN.' }, 501)
+    const built = readBuildManifest(root)
+    if (!built) return json({ error: 'No manifest found. It is written by `next build` when next.config uses withCMS().' }, 500)
+    try {
+      const result = await saveToGitHub(gh, built.files, edits, fetch, editors.get(req))
+      return json({ mode: gh.mode === 'pull-request' ? 'pull-request' : 'github', ...result }, result.conflicts.length ? 409 : 200)
+    } catch (error) {
+      const message = error instanceof GitHubError ? error.message : 'GitHub: the request failed'
+      return json({ error: message }, 502)
+    }
+  }
+
+  return { GET, POST }
+}

@@ -1,0 +1,45 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "landing",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "--dir",
+        "examples/landing",
+        "dev",
+        "--port",
+        "3210"
+      ],
+      "port": 3210
+    },
+    {
+      "name": "landing-prod",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "--dir",
+        "examples/landing",
+        "exec",
+        "next",
+        "start",
+        "--port",
+        "3211"
+      ],
+      "port": 3211
+    },
+    {
+      "name": "vite-react",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "--dir",
+        "examples/vite-react",
+        "exec",
+        "vite",
+        "--port",
+        "3220",
+        "--strictPort"
+      ],
+      "port": 3220
+    }
+  ]
+}

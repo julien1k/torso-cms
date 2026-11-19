@@ -1,0 +1,373 @@
+@layer ui-sdk;
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
+  --color-mark: var(--mark);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-pixel: var(--font-geist-pixel-square);
+  --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-geist-sans);
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  /*
+   * One-bit, like the pixels of the hero: white, black, and a single colour.
+   * The colour is the blue of selected text, because selecting text is the product.
+   */
+  --paper: #ffffff;
+  --ink: #0b0b0c;
+  --mark: #2450ff;
+
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --card: #ffffff;
+  --card-foreground: var(--ink);
+  --popover: #ffffff;
+  --popover-foreground: var(--ink);
+  --primary: var(--ink);
+  --primary-foreground: var(--paper);
+  --secondary: #f1f1f2;
+  --secondary-foreground: var(--ink);
+  --muted: #f1f1f2;
+  --muted-foreground: #5f6066;
+  --accent: #f1f1f2;
+  --accent-foreground: var(--ink);
+  --destructive: #c8102e;
+  --border: #d9d9dc;
+  --input: #d9d9dc;
+  --ring: var(--mark);
+  /* Pixels have corners. */
+  --radius: 0px;
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  button:not(:disabled), [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+  html {
+    @apply font-sans;
+  }
+}
+@layer base {
+  html {
+    color-scheme: light;
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
+  }
+  @media (pointer: fine) {
+    html {
+      overscroll-behavior: none;
+    }
+  }
+  [id] {
+    scroll-margin-top: 5rem;
+  }
+  a, button {
+    touch-action: manipulation;
+  }
+}
+
+/* Press feedback: quick, and only on transform. */
+@utility pressable {
+  transition:
+    transform 160ms var(--ease-out),
+    background-color 160ms ease,
+    color 160ms ease,
+    border-color 160ms ease;
+  &:active {
+    transform: scale(0.97);
+  }
+}
+
+/* One-off entrance for the hero. Stagger with --i. */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+@utility rise {
+  animation: rise 500ms var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * 60ms + 80ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .rise {
+    animation-name: fade;
+  }
+  .pressable:active {
+    transform: none;
+  }
+}
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+
+/* Content appears as it scrolls into view. Stagger siblings with --i. */
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(20px);
+  transition:
+    opacity 700ms var(--ease-out),
+    transform 700ms var(--ease-out);
+  transition-delay: calc(var(--i, 0) * 70ms);
+}
+[data-reveal][data-shown] {
+  opacity: 1;
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal] {
+    transform: none;
+    transition: opacity 400ms ease;
+  }
+}
+
+/* A dark section: the same tokens, inverted, so every component inside follows. */
+.ink {
+  --background: var(--ink);
+  --foreground: #f4f4f5;
+  --card: #151517;
+  --card-foreground: #f4f4f5;
+  --primary: #f4f4f5;
+  --primary-foreground: var(--ink);
+  --secondary: #1d1d20;
+  --muted: #1d1d20;
+  --muted-foreground: #a0a1a8;
+  --accent: #1d1d20;
+  --border: rgb(255 255 255 / 0.16);
+  --input: rgb(255 255 255 / 0.16);
+  --mark: #6f8cff;
+  background: var(--background);
+  color: var(--foreground);
+}
+
+/* Display type: the serif, for anything that is meant to be read as a headline. */
+@utility display {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  letter-spacing: -0.045em;
+  line-height: 1;
+}
+
+/* The pixel typeface: for the one word in a headline that carries it, for numerals, for the name. */
+@utility px {
+  font-family: var(--font-pixel);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+/* A faint grid of dots, like the pixels of the hero, behind a section. */
+@utility dotted {
+  background-image: radial-gradient(color-mix(in oklab, var(--foreground) 14%, transparent) 1px, transparent 1px);
+  background-size: 12px 12px;
+}
+
+/* A card that lifts a little and catches a soft light where the pointer is. */
+@utility lift {
+  transition:
+    transform 160ms var(--ease-out),
+    box-shadow 160ms var(--ease-out),
+    border-color 160ms ease;
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      /* A hard, unblurred shadow: the card steps up by exactly four pixels. */
+      transform: translate(-4px, -4px);
+      border-color: var(--foreground);
+      box-shadow: 4px 4px 0 var(--foreground);
+    }
+  }
+}
+
+/* Pixel icons draw themselves, one square after another, when they scroll into view. */
+[data-reveal] .glyph rect {
+  opacity: 0;
+  transition: opacity 180ms ease;
+  transition-delay: calc(var(--n) * 16ms + var(--i, 0) * 70ms + 250ms);
+}
+[data-reveal][data-shown] .glyph rect {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lift:hover {
+    transform: none;
+    box-shadow: none;
+  }
+}
+
+/*
+ * The editor's hover box, borrowed for headlines: the dashed rectangle Torso draws around
+ * text you can click. It marks the pixel-type word as "the editable one".
+ */
+@utility editable {
+  padding: 0.04em 0.14em;
+  margin: 0 0.04em;
+  outline: max(1.5px, 0.028em) dashed var(--mark);
+  outline-offset: -0.02em;
+  background: color-mix(in oklab, var(--mark) 9%, transparent);
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+/* The caret: always there so nothing shifts, invisible until the word is hovered. */
+.editable::after {
+  content: "";
+  display: inline-block;
+  width: max(2px, 0.045em);
+  height: 0.82em;
+  margin: 0 calc(-1 * max(2px, 0.045em)) 0 0.07em;
+  vertical-align: -0.06em;
+  background: var(--mark);
+  opacity: 0;
+}
+@keyframes caret {
+  50% {
+    opacity: 0;
+  }
+}
+@media (hover: hover) and (pointer: fine) {
+  /* Hovered text in the editor is dashed; text being edited is solid, with a caret. */
+  .editable:hover {
+    outline-style: solid;
+    background: color-mix(in oklab, var(--mark) 14%, transparent);
+  }
+  .editable:hover::after {
+    opacity: 1;
+    animation: caret 1.06s steps(1) infinite;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .editable:hover::after {
+    animation: none;
+  }
+}
+
+/* Over a photo the blue would sink into the sky, so the box turns white. */
+[data-pixel-surface] .editable {
+  outline-color: #fff;
+  background: rgb(255 255 255 / 0.14);
+}
+[data-pixel-surface] .editable::after {
+  background: #fff;
+}
+[data-pixel-surface] .editable:hover {
+  background: rgb(255 255 255 / 0.22);
+}
+
+/* Touch screens have no hover, so the headline word simply keeps its caret blinking. */
+@media (hover: none) {
+  .editable::after {
+    opacity: 1;
+    animation: caret 1.06s steps(1) infinite;
+  }
+}
+@media (hover: none) and (prefers-reduced-motion: reduce) {
+  .editable::after {
+    animation: none;
+  }
+}
+
+/* Fingers need room: every link and control is at least 44px tall on a touch screen. */
+@media (pointer: coarse) {
+  nav a,
+  header a,
+  .pressable,
+  .tap,
+  [data-slot="tabs-tab"] {
+    min-height: 2.75rem;
+    display: inline-flex;
+    align-items: center;
+  }
+  [data-slot="tabs-list"] {
+    height: 3.25rem;
+  }
+}

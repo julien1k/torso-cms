@@ -1,0 +1,224 @@
+export const metadata = {
+  title: "Docs: Torso",
+  description: "Install Torso, decide who can edit, and choose where saves go.",
+}
+
+# Docs
+
+Torso adds click-to-edit to a Next.js site. Setup is two small changes to your project and a few environment variables. This page is itself an MDX file, edited with Torso.
+
+## Requirements
+
+- Next.js 16 with the App Router. Turbopack and webpack are both supported. Next.js 15 should work but is not tested.
+- Node.js 22.12 or newer.
+- For saving in production: a GitHub repository that your host deploys from.
+
+## Install
+
+```bash
+pnpm add torso-cms
+```
+
+The package is not published to npm yet. Until it is, install it from the repository.
+
+## Wrap your config
+
+Wrap the config you already export. Every existing option keeps working.
+
+```ts
+// next.config.ts
+import { withCMS } from "torso-cms";
+
+const nextConfig = {
+  // your existing config
+};
+
+export default withCMS(nextConfig);
+```
+
+This adds one step to the compiler. It stamps a short id on elements that contain literal text or a literal link, and during `next build` it writes a manifest to `.torso/manifest.json`. Your source files are not changed.
+
+Add the generated folder to `.gitignore`:
+
+```bash
+.torso
+```
+
+## Add the edit route
+
+Create one catch-all route. Its folder name decides the address of the editor.
+
+```ts
+// app/edit/[[...path]]/route.ts
+import { createCMS } from "torso-cms/server";
+
+export const { GET, POST } = createCMS();
+```
+
+Start your dev server and open `/edit`. To edit another page, put its path after it: `/edit/pricing` opens `/pricing`.
+
+## Who can edit
+
+In development the editor is open, because only you can reach it. In production it is closed until you choose one of two options.
+
+### A password
+
+Set `CMS_PASSWORD`. Visitors to the edit address see a sign-in prompt, and a correct password starts a session that lasts seven days.
+
+```bash
+CMS_PASSWORD=choose-a-long-one
+```
+
+Ten wrong attempts from one address lock it out for ten minutes. On serverless hosts each instance counts separately, so treat this as a brake and choose a long password.
+
+### Your own login
+
+If your app already has an admin session, reuse it. Return `true` for people who may edit.
+
+```ts
+export const { GET, POST } = createCMS({
+  authorize: (request) => isAdmin(request),
+});
+```
+
+Everyone else receives your site’s normal 404 page, so the edit address does not reveal that it exists. If the function throws, access is denied.
+
+Return a name instead of `true` and that person becomes the author of the commits their saves create:
+
+```ts
+export const { GET, POST } = createCMS({
+  authorize: async (request) => {
+    const user = await currentUser(request);
+    return user?.isAdmin ? { name: user.name, email: user.email } : false;
+  },
+});
+```
+
+With a shared password there is no way to tell editors apart, so every commit is made by the owner of the GitHub token.
+
+## Where saves go
+
+### In development
+
+Save rewrites the source file on disk. The page updates in place and the change shows up in `git diff` like any other edit.
+
+### In production
+
+Save creates one commit on your branch through the GitHub API, and your host redeploys. Set three variables:
+
+```bash
+CMS_GITHUB_REPO=owner/name
+CMS_GITHUB_BRANCH=main
+CMS_GITHUB_TOKEN=github_pat_YOUR_TOKEN_HERE
+```
+
+Use a fine-grained token with read and write access to **Contents** on that one repository, and nothing else. On Vercel the repository and branch default to the ones the deployment was built from, so only the token is required.
+
+While the site rebuilds, the editor shows **Publishing…** and keeps displaying what you saved.
+
+### As a pull request
+
+By default every Save is a commit on your deploy branch, which rebuilds your site. To collect saves in a pull request instead, set one more variable:
+
+```bash
+CMS_GITHUB_MODE=pull-request
+```
+
+Saves then go to a branch called `torso/edits` and Torso opens a pull request for it. Later saves are added to the same pull request. Nothing goes live, and nothing rebuilds, until it is merged. The token also needs read and write access to **Pull requests**.
+
+When no pull request is open, the next save starts the branch again from your deploy branch.
+
+If your Next.js app lives in a subfolder of the repository, pass it:
+
+```ts
+createCMS({ github: { dir: "apps/web" } });
+```
+
+## What you can edit
+
+- Text written directly in a component, including both branches of a condition such as `open ? "Close" : "Menu"`.
+- Link addresses written as a literal `href`.
+- String props passed to a component, such as a `title`.
+- Strings and numbers in constant arrays and objects, in the same file or imported from another.
+- Strings in JSON translation files, in folders named `messages`, `locales`, `i18n`, `lang`, `translations` or `dictionaries`.
+- Text in Markdown and MDX files, and single-line string fields in their front matter.
+
+## What stays read-only
+
+- Text from a database or a remote service.
+- Anything your code calculates: a total, a formatted date, a string built from several parts.
+- Translations that contain a placeholder, such as `Hello {name}`.
+- Inline code, code blocks and link addresses inside Markdown.
+- Images and rich text. Editors cannot add, remove or restyle elements.
+
+When the editor cannot be certain where a piece of text comes from, it leaves that text read-only and tells you why when you click it. Every known limit is on the [status page](/status).
+
+## In the editor
+
+- Click any text to edit it in place. Enter finishes, Escape cancels.
+- Click a link to change its address. The link does not navigate while you are editing.
+- **Undo**, or Ctrl+Z, steps back through unsaved edits, including a Discard. It reaches back to your last save.
+- Unsaved edits survive a reload in the same browser.
+- **Browse** lets clicks through to your site, to open a menu or move to another page.
+- Click text that cannot be edited and the editor tells you why.
+
+## Deploying
+
+1. Commit the two changes above and deploy as usual.
+2. Set the environment variables from this page on your host.
+3. Open the edit address on your live site and sign in.
+
+The manifest is written during `next build` and included in the server output automatically. Nothing else needs to be uploaded.
+
+## Other frameworks
+
+Torso is built for Next.js. For React apps on Vite there is an experimental plugin:
+
+```ts
+// vite.config.ts
+import react from "@vitejs/plugin-react";
+import { torso } from "torso-cms/vite";
+import { defineConfig } from "vite";
+
+export default defineConfig({
+  plugins: [torso(), react()],
+});
+```
+
+In development it serves the editor at `/edit` from the Vite dev server, so there is no route file to add. It is verified on a stock Vite and React app. vinext, React Router and TanStack Start should work the same way but are not tested yet.
+
+In production the editor needs a server route. Frameworks with fetch-style handlers can mount `createCMS()` themselves. A static single-page app has no server to run it on.
+
+Svelte, Vue and Astro templates are not supported yet. See the [status page](/status) for the full list.
+
+## Options
+
+### withCMS(config, options)
+
+- `root`: the project folder. Defaults to the folder `next` runs in.
+
+### createCMS(options)
+
+- `password`: the editor password. Defaults to `CMS_PASSWORD`.
+- `secret`: signs the session cookie. Defaults to `CMS_SECRET`, or a value derived from the password.
+- `authorize`: a function that receives the request and returns `true`, `false`, or `{ name, email }` to name the editor.
+- `github`: `repo`, `branch`, `token`, `mode` (`"commit"` or `"pull-request"`), `editsBranch`, `dir`, `apiUrl` for GitHub Enterprise, and `message` to set the commit message.
+- `root`: the project folder. Defaults to the folder `next` runs in.
+
+## Troubleshooting
+
+### The edit address shows a 404 in production
+
+Neither a password nor `authorize` is set, or `authorize` returned something other than `true`.
+
+### A piece of text cannot be clicked
+
+Click it: the editor says why. Either the text is calculated, or the same words exist in several places in your code and the editor cannot tell them apart. In that case it lists the files, and making the wording unique is usually enough.
+
+### Save says the source changed
+
+Someone changed that text in the repository after the page was built. Reload the editor to see the current version, then edit again.
+
+### Save says no manifest was found
+
+The site was built without `withCMS` around its config, or the `.torso` folder was removed between the build and the start of the server.

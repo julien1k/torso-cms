@@ -1,0 +1,7 @@
+packages:
+  - "."
+  - "examples/*"
+ignoredBuiltDependencies:
+  - sharp
+  - unrs-resolver
+  - esbuild
