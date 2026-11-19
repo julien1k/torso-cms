@@ -192,24 +192,12 @@
   }
 }
 
-/* Content appears as it scrolls into view. Stagger siblings with --i. */
+/*
+ * Content appears as it scrolls into view. It starts hidden here; reveal.tsx plays the
+ * animation and leaves it at its end state. Stagger siblings with --i.
+ */
 [data-reveal] {
   opacity: 0;
-  transform: translateY(20px);
-  transition:
-    opacity 700ms var(--ease-out),
-    transform 700ms var(--ease-out);
-  transition-delay: calc(var(--i, 0) * 70ms);
-}
-[data-reveal][data-shown] {
-  opacity: 1;
-  transform: none;
-}
-@media (prefers-reduced-motion: reduce) {
-  [data-reveal] {
-    transform: none;
-    transition: opacity 400ms ease;
-  }
 }
 
 /* A dark section: the same tokens, inverted, so every component inside follows. */
@@ -271,11 +259,6 @@
 /* Pixel icons draw themselves, one square after another, when they scroll into view. */
 [data-reveal] .glyph rect {
   opacity: 0;
-  transition: opacity 180ms ease;
-  transition-delay: calc(var(--n) * 16ms + var(--i, 0) * 70ms + 250ms);
-}
-[data-reveal][data-shown] .glyph rect {
-  opacity: 1;
 }
 
 @media (prefers-reduced-motion: reduce) {

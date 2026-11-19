@@ -276,7 +276,7 @@ export function Promises() {
 
 const limits = [
   "Text that comes from a database or a remote service stays where it is.",
-  "Images and rich text are not editable yet.",
+  "It edits what already exists. Images, rich text, new sections and new pages are planned, not built.",
   "Values your code calculates, such as a total or today’s date, are left alone.",
   "Next.js is the supported framework. React on Vite is experimental. Svelte and Vue are not supported yet.",
 ];

@@ -22,7 +22,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="flex min-h-full flex-col">
         <noscript>
-          <style>{"[data-reveal]{opacity:1;transform:none}"}</style>
+          <style>{"[data-reveal],[data-reveal] .glyph rect{opacity:1}"}</style>
         </noscript>
         <a
           href="#main"

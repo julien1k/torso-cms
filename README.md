@@ -127,6 +127,21 @@ Known limits:
 
 The project site has the full list on its status page.
 
+### Planned
+
+Today Torso edits what already exists. Planned, in rough order, with no dates:
+
+1. Add, remove and reorder anything that repeats: FAQ entries, testimonials, plans, navigation links.
+2. New posts and pages, created by copying an existing one.
+3. Rich text in Markdown and MDX bodies.
+4. Images, with their descriptions.
+5. Adding and moving sections, chosen from the components a project already has.
+6. Point and describe: click an element, say what should change, and a coding agent opens the pull request.
+7. Review of every pending change as a diff before saving.
+8. Sign in with GitHub, in place of a shared password and a token.
+9. Edit history with revert, page settings, and a coverage report.
+10. Svelte and Vue.
+
 ## This repository
 
 ```

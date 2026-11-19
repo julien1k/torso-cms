@@ -44,6 +44,58 @@ const frameworks: { name: string; state: State; note: string }[] = [
   },
 ];
 
+/** What is planned, in rough order. None of it is built, and none of it has a date. */
+const planned: { title: string; body: string }[] = [
+  {
+    title: "Add, remove and reorder what repeats",
+    body: "Duplicate an FAQ entry, a testimonial, a pricing plan or a navigation link, then edit the copy. Its neighbours are the schema, so there is still nothing to model.",
+  },
+  {
+    title: "New posts and new pages",
+    body: "Create a Markdown post or a page by copying an existing one. Open an address that does not exist yet and choose what to start from.",
+  },
+  {
+    title: "Rich text, in Markdown",
+    body: "Paragraphs, headings, lists and links in the body of Markdown and MDX files. JSX stays text-only, which is what keeps an edit from breaking a layout.",
+  },
+  {
+    title: "Images",
+    body: "Replace an image and edit its description. The file is committed together with the text.",
+  },
+  {
+    title: "Components and sections",
+    body: "Add a section to a page by choosing from the components your project already has, and move sections around.",
+  },
+  {
+    title: "Point and describe",
+    body: "For changes that are more than words: click an element, say what should change, and a coding agent opens the pull request. Torso already knows which line you clicked.",
+  },
+  {
+    title: "Review before saving",
+    body: "Every pending change listed as a diff, with its file, before anything is written.",
+  },
+  {
+    title: "Sign in with GitHub",
+    body: "Real identities in place of a shared password and a token. Each editor’s commits carry their own name, and access follows the repository’s permissions.",
+  },
+  {
+    title: "History",
+    body: "Past edits in the editor, each with a way to revert it.",
+  },
+  {
+    title: "Page settings",
+    body: "Title, description and social image. Torso already reads them from your code. They have no place in the editor yet.",
+  },
+  {
+    title: "A coverage report",
+    body: "A command that says how much of a site’s text is editable, and why the rest is not, before you promise anyone anything.",
+  },
+  {
+    title: "More frameworks",
+    body: "Svelte and Vue, each with its own parser, once the Next.js and Vite paths are proven in production.",
+  },
+];
+
 const limits: { area: string; items: { title: string; body: string }[] }[] = [
   {
     area: "Finding the text",
@@ -120,8 +172,8 @@ const limits: { area: string; items: { title: string; body: string }[] }[] = [
         body: "In a sentence with a bold phrase or a link inside it, each stretch of plain text is editable on its own. You cannot select across them.",
       },
       {
-        title: "No images, and no rich text",
-        body: "Editors can change words, numbers and link addresses. They cannot swap an image, or add, remove or restyle an element.",
+        title: "No images, no rich text, no new content yet",
+        body: "Editors can change words, numbers and link addresses that already exist. They cannot swap an image, add a section, or create a page or a post. All of that is planned, and listed at the end of this page.",
       },
     ],
   },
@@ -174,7 +226,7 @@ export default function Status() {
         </h1>
         <p className="mt-6 max-w-2xl text-pretty text-lg leading-8 text-muted-foreground">
           A tool that writes to your repository should be plain about what it can and cannot do. This page lists
-          every limit we know of. If you find one that is missing, it belongs here.
+          every limit we know of, and then what we plan to build. If you find a limit that is missing, it belongs here.
         </p>
       </header>
 
@@ -212,6 +264,32 @@ export default function Status() {
           </div>
         </section>
       ))}
+
+      <section id="next" className="ink">
+        <div className="mx-auto grid w-full max-w-6xl gap-8 px-5 py-24 sm:px-8 lg:grid-cols-[minmax(0,4fr)_minmax(0,8fr)] lg:gap-16">
+          <div data-reveal>
+            <Eyebrow>Roadmap</Eyebrow>
+            <h2 className="display mt-5 text-4xl sm:text-5xl">
+              What comes <Px>next</Px>
+            </h2>
+            <p className="mt-5 text-pretty leading-7 text-muted-foreground">
+              Today Torso edits what already exists. To earn the word CMS it has to let people make new things. This
+              is the plan, in rough order. None of it is built yet, and none of it has a date.
+            </p>
+          </div>
+          <ol data-reveal className="divide-y border-y">
+            {planned.map((item, index) => (
+              <li key={item.title} className="grid gap-x-6 gap-y-1 py-6 sm:grid-cols-[3rem_minmax(0,1fr)]">
+                <span className="px text-2xl leading-none text-mark tabular-nums">{index + 1}</span>
+                <div>
+                  <h3 className="font-medium">{item.title}</h3>
+                  <p className="mt-2 text-pretty leading-7 text-muted-foreground">{item.body}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
 
       <section className="border-t">
         <div className="mx-auto w-full max-w-6xl px-5 py-20 sm:px-8">
