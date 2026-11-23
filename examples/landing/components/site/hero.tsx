@@ -49,7 +49,14 @@ export function Hero() {
         <Px>no head.</Px>
       </h1>
 
-      <div className="rise mt-auto flex justify-center px-5 pb-10 sm:pb-14" style={step(2)}>
+      <p
+        className="rise mx-auto mt-[clamp(1rem,2.5svh,1.75rem)] max-w-[32ch] px-5 text-center text-[clamp(1.125rem,1.7vw,1.5rem)] leading-snug text-balance text-white [text-shadow:0_1px_3px_rgb(0_0_0/0.5),0_2px_24px_rgb(0_0_0/0.55)] sm:max-w-none"
+        style={step(2)}
+      >
+        The click-to-edit CMS that writes to your source code.
+      </p>
+
+      <div className="rise mt-auto flex justify-center px-5 pb-10 sm:pb-14" style={step(3)}>
         <CopyPrompt />
       </div>
 
