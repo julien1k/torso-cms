@@ -92,7 +92,7 @@ export function HowItWorks() {
         eyebrow="How it works"
         title={
           <>
-            A headless CMS still has a body. This one has <Px>neither.</Px>
+            A headless CMS still needs a body. Torso uses <Px>yours.</Px>
           </>
         }
         lead="No content backend, no schema, no sync. The words live in your components, and Torso edits them there."
