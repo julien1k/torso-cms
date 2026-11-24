@@ -44,7 +44,7 @@ export function CopyPrompt({ className }: { className?: string }) {
         <CopyIcon className={cn(icon, copied && hidden)} />
         <CheckIcon className={cn(icon, !copied && hidden)} />
       </span>
-      <span aria-live="polite">{copied ? "Copied" : "Copy prompt"}</span>
+      <span aria-live="polite">{copied ? "Copied" : "Copy install prompt"}</span>
     </Button>
   );
 }
