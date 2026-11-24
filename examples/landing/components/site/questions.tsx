@@ -38,7 +38,7 @@ export function Questions() {
               Things people ask <Px>first</Px>
             </>
           } className="lg:[&_h2]:text-5xl" />
-        <Accordion data-reveal defaultValue={[questions[0].question]}>
+        <Accordion data-reveal aria-label="Questions" defaultValue={[questions[0].question]}>
           {questions.map((item) => (
             <AccordionItem key={item.question} value={item.question}>
               <AccordionTrigger>{item.question}</AccordionTrigger>

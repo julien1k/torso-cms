@@ -4,7 +4,7 @@ Click-to-edit for Next.js, saved back to your code.
 
 Torso is a visual editor with no schema, no content files and no wrapper components. It finds the text and links written in your components, lets you edit them on the live page, and writes the change back to the source file: to disk in development, as a GitHub commit or pull request in production.
 
-> **Status: early.** Torso is not published to npm yet. It has been tested in Chromium, and production saving has been tested against a simulated GitHub API, not yet in a live deployment. Every known limit is listed in [Status and limits](#status-and-limits).
+> **Status: early.** Torso is not published to npm yet. It has been tested in Chromium, and production saving has been tested against a simulated GitHub API and on the project site's own live deployment on Vercel. Every known limit is listed in [Status and limits](#status-and-limits).
 
 ## How it works
 
@@ -90,6 +90,15 @@ Use a fine-grained token with read and write access to **Contents** on that one 
 - Strings and numbers in constant arrays and objects, in the same file or imported.
 - Strings in JSON translation files, in folders named `messages`, `locales`, `i18n`, `lang`, `translations` or `dictionaries`.
 - Text in Markdown and MDX files, and single-line string fields in their front matter.
+
+## For agents
+
+An agent can make the same edits a person does, without clicking or typing into the page. The editor exposes five calls: list what is editable on the open page, change texts and links by id, save, discard, and open another page.
+
+- **In a browser with WebMCP**, they are registered as the tools `torso_list`, `torso_edit`, `torso_save`, `torso_discard` and `torso_open`.
+- **From script in the page**, they are at `window.__cmsEditor.agent`.
+
+An agent may save on its own in development and in pull-request mode. Where Save commits straight to the deploy branch, `torso_save` stops with "Needs a person" and the editor asks the person to press Save. These tools have been tested through script; no WebMCP browser has been tested yet.
 
 ## React on Vite (experimental)
 

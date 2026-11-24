@@ -154,7 +154,8 @@ export function createCMS(options: CreateCMSOptions = {}) {
     if (segments[0] !== API) {
       if (who === 'login') return html(loginHtml({ action: `${api}/login`, next: url.pathname + url.search }), 401)
       const start = `/${segments.map(encodeURIComponent).join('/')}${url.search}`
-      return html(shellHtml({ base, api, start }))
+      const saves = isDev() ? 'disk' : github()?.mode === 'pull-request' ? 'pull-request' : 'commit'
+      return html(shellHtml({ base, api, start, saves }))
     }
     if (segments[1] === 'login') return redirect(base || '/')
     if (who === 'login') return json({ error: 'signed out' }, 401)

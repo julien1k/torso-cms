@@ -73,6 +73,16 @@ describe('createCMS in production', () => {
     expect((await get(broken, '/edit')).status).toBe(404)
   })
 
+  it('tells the editor where Save writes, so an agent only saves on its own into a pull request', async () => {
+    production()
+    const shell = (cms: ReturnType<typeof createCMS>) => get(cms, '/edit').then((res) => res.text())
+    const base = { authorize: () => true, github: { repo: 'o/r', token: 't', branch: 'main' } }
+    expect(await shell(createCMS(base))).toContain('"saves":"commit"')
+    expect(await shell(createCMS({ ...base, github: { ...base.github, mode: 'pull-request' } }))).toContain('"saves":"pull-request"')
+    vi.stubEnv('NODE_ENV', 'development')
+    expect(await shell(createCMS())).toContain('"saves":"disk"')
+  })
+
   it('asks for the password, rejects a wrong one, and signs in with the right one', async () => {
     production()
     const cms = createCMS({ password: 'correct horse' })

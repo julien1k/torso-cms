@@ -2,6 +2,8 @@
 
 import { RotateCcwIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { EditableText } from "@/components/ui/editable-text";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Sample, Slot } from "@/lib/demo-samples";
 import { cn } from "@/lib/utils";
@@ -108,14 +110,15 @@ function Editor({ sample }: { sample: PlaygroundSample }) {
           <span translate="no" className="flex-1 truncate rounded-md bg-background px-3 py-1 font-mono text-xs text-muted-foreground">
             yoursite.com/edit
           </span>
-          <button
-            type="button"
+          <Button
+            variant="ghost"
             onClick={reset}
-            className="pressable inline-flex h-7 items-center gap-1.5 rounded-none px-2.5 text-xs text-muted-foreground outline-none hover:bg-background hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50"
+            aria-label={`Reset the ${sample.tab} demo`}
+            className="h-7 gap-1.5 px-2.5 text-xs font-normal text-muted-foreground hover:bg-background hover:text-foreground"
           >
             <RotateCcwIcon className="size-3.5" aria-hidden="true" />
             Reset
-          </button>
+          </Button>
         </div>
 
         <div key={version} className="min-h-64 flex-1 px-6 pb-20 pt-8 sm:px-9">
@@ -129,15 +132,12 @@ function Editor({ sample }: { sample: PlaygroundSample }) {
                   const index = sample.texts.indexOf(part.text);
                   const problem = problems.some((p) => p.index === index);
                   return (
-                    <span
+                    <EditableText
                       key={part.text}
-                      role="textbox"
                       aria-label={`Edit “${part.text.trim()}”`}
-                      tabIndex={0}
-                      contentEditable="plaintext-only"
+                      defaultValue={part.text.replace(/\n/g, " ")}
+                      onValueChange={(value) => change(index, value)}
                       suppressContentEditableWarning
-                      spellCheck={false}
-                      onInput={(event) => change(index, event.currentTarget.textContent ?? "")}
                       onKeyDown={(event) => {
                         if (event.key === "Enter") {
                           event.preventDefault();
@@ -152,7 +152,7 @@ function Editor({ sample }: { sample: PlaygroundSample }) {
                       )}
                     >
                       {part.text.replace(/\n/g, " ")}
-                    </span>
+                    </EditableText>
                   );
                 })}
               </Tag>

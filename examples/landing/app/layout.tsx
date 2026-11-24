@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { GeistMono } from "geist/font/mono";
 import { GeistSans } from "geist/font/sans";
 import { GeistPixelSquare } from "geist/font/pixel/square";
+import { AgentBridge } from "@/components/site/agent-bridge";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -31,6 +32,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           Skip to content
         </a>
         {children}
+        <AgentBridge />
       </body>
     </html>
   );
