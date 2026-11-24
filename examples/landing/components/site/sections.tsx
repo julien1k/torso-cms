@@ -2,7 +2,7 @@ import type { CSSProperties, ReactNode } from "react";
 import Link from "next/link";
 import { ArrowRightIcon } from "lucide-react";
 import { preparedSamples } from "@/lib/demo-prepared";
-import { pages, statusPage } from "@/lib/navigation";
+import { aboutPages, pages, statusPage } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 import { repositoryUrl } from "@/lib/site";
 import { CopyPrompt } from "./copy-prompt";
@@ -341,7 +341,7 @@ export function Footer() {
           <Wordmark />
         </p>
         <nav aria-label="Footer" className="flex flex-wrap gap-x-6 gap-y-2">
-          {[...pages, statusPage].map((page) => (
+          {[...pages, statusPage, ...aboutPages].map((page) => (
             <Link
               key={page.href}
               href={page.href}

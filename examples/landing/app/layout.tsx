@@ -14,6 +14,8 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title,
   description,
+  // Resolved against each page's own path, so every page names itself.
+  alternates: { canonical: "./" },
   openGraph: { type: "website", siteName: "Torso", title, description, url: "/" },
   twitter: { card: "summary_large_image", title, description },
 };

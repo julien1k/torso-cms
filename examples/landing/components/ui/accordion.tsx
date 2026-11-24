@@ -42,7 +42,8 @@ function AccordionTrigger({ className, children }: { className?: string; childre
 
 function AccordionContent({ className, children }: { className?: string; children: ReactNode }) {
   return (
-    <AccordionPanel className="h-(--accordion-panel-height) overflow-hidden transition-[height] duration-250 ease-(--ease-out) data-ending-style:h-0 data-starting-style:h-0 motion-reduce:transition-none">
+    // Closed answers stay in the HTML, so find in page, search engines and agents can read them.
+    <AccordionPanel hiddenUntilFound className="h-(--accordion-panel-height) overflow-hidden transition-[height] duration-250 ease-(--ease-out) data-ending-style:h-0 data-starting-style:h-0 motion-reduce:transition-none">
       <div className={cn("pb-5", className)}>{children}</div>
     </AccordionPanel>
   )

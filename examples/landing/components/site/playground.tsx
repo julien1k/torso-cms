@@ -98,7 +98,7 @@ function Editor({ sample }: { sample: PlaygroundSample }) {
   const lines = code.split(/\r?\n/);
 
   return (
-    <div className="grid gap-4 lg:grid-cols-2">
+    <div data-markdown="skip" className="grid gap-4 lg:grid-cols-2">
       {/* The page, in a browser window, with the editor's toolbar floating over it. */}
       <div className="flex min-w-0 flex-col overflow-hidden rounded-2xl border bg-card shadow-[0_1px_2px_rgb(24_26_18/0.05),0_24px_48px_-24px_rgb(24_26_18/0.25)]">
         <div className="flex items-center gap-3 border-b bg-muted/60 px-4 py-2.5">
