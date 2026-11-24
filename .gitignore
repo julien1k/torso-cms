@@ -5,3 +5,4 @@ dist
 .torso
 .env*
 !.env.example
+.vercel
