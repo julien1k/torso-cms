@@ -1,7 +1,7 @@
 import { createLimiter, createSession, passwordMatches, readCookie, SESSION_COOKIE, sessionSecret, verifySession } from './auth'
 import { mountEditor } from './client/editor'
 import { resolveDom } from './client/resolve'
-import { GitHubError, saveToGitHub, type Editor, type GitHubOptions } from './github'
+import { GitHubError, pullRequestState, saveToGitHub, type Editor, type GitHubOptions } from './github'
 import { clientManifest, readBuildManifest, scanProject, type ClientManifest } from './manifest'
 import { saveToDisk, type Edit } from './save'
 import { loginHtml, shellHtml } from './shell'
@@ -163,6 +163,17 @@ export function createCMS(options: CreateCMSOptions = {}) {
       case 'manifest': {
         const data = manifest()
         return data ? json(data) : json({ error: 'No manifest found. It is written by `next build` when next.config uses withCMS().' }, 500)
+      }
+      case 'review': {
+        // What became of the pull request a save went into: open, merged or closed.
+        const number = Number(url.searchParams.get('number'))
+        const gh = github()
+        if (!gh || !Number.isInteger(number) || number < 1) return json({ state: null })
+        try {
+          return json({ state: await pullRequestState(gh, number) })
+        } catch (error) {
+          return json({ error: error instanceof GitHubError ? error.message : 'GitHub: the request failed' }, 502)
+        }
       }
       case 'editor.js': {
         const body = `window.__cmsEditor=(${mountEditor.toString()})(${resolveDom.toString()},window.__cmsConfig);`

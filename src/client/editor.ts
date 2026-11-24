@@ -69,7 +69,7 @@ export function mountEditor(resolveDom: (doc: Document, manifest: any) => any, c
    */
   const PUBLISHED_KEY = `torso:published:${config.base}`
   const PUBLISHED_MAX_AGE = 30 * 60 * 1000
-  const published = new Map<string, { from: string; to: string; at: number; ttl?: number }>()
+  const published = new Map<string, { from: string; to: string; at: number; ttl?: number; pr?: number }>()
   try {
     for (const [id, p] of JSON.parse(localStorage.getItem(PUBLISHED_KEY) || '[]')) {
       if (Date.now() - p.at < (p.ttl ?? PUBLISHED_MAX_AGE)) published.set(id, p)
@@ -222,14 +222,60 @@ export function mountEditor(resolveDom: (doc: Document, manifest: any) => any, c
   function schedulePoll() {
     window.clearTimeout(pollTimer)
     if (!published.size) return
-    pollTimer = window.setTimeout(async () => {
+    pollTimer = window.setTimeout(
+      async () => {
+        try {
+          await checkReviews()
+          await loadManifest()
+          scan()
+        } catch {
+          schedulePoll()
+        }
+      },
+      // A pull request sits for hours or days; a direct commit is live in minutes.
+      awaitingMerge() ? 60000 : 20000,
+    )
+  }
+
+  /**
+   * Ask what became of the pull requests that saved edits are waiting in. Once one is
+   * merged, its edits are only waiting for the deploy. If one was closed without merging,
+   * its edits were never published: they come back as unsaved changes, so nothing is lost.
+   */
+  async function checkReviews() {
+    const numbers = new Set<number>()
+    for (const p of published.values()) if (p.pr && p.ttl) numbers.add(p.pr)
+    for (const number of numbers) {
+      let state: string | null = null
       try {
-        await loadManifest()
-        scan()
+        const res = await fetch(`${config.api}/review?number=${number}`, { cache: 'no-store' })
+        if (res.ok) state = (await res.json()).state
       } catch {
-        schedulePoll()
+        /* offline, or GitHub did not answer: ask again next time */
       }
-    }, 20000)
+      if (state !== 'merged' && state !== 'closed') continue
+      let returned = 0
+      for (const [id, p] of published) {
+        if (p.pr !== number) continue
+        if (state === 'merged') {
+          published.set(id, { from: p.from, to: p.to, at: Date.now() })
+          continue
+        }
+        published.delete(id)
+        if (!pending.has(id)) {
+          pending.set(id, { from: p.from, to: p.to })
+          returned++
+        }
+      }
+      if (state === 'closed') {
+        const what = returned === 1 ? 'Its change is back as an unsaved change' : `Its ${returned} changes are back as unsaved changes`
+        say(`Pull request #${number} was closed without merging. ${returned ? `${what}.` : 'Nothing from it was published.'}`, true)
+      }
+    }
+    if (numbers.size) {
+      persistPublished()
+      remember()
+    }
   }
 
   function queueScan() {
@@ -712,6 +758,7 @@ export function mountEditor(resolveDom: (doc: Document, manifest: any) => any, c
             to: change.to,
             at: Date.now(),
             ttl: review ? 7 * 24 * 60 * 60 * 1000 : undefined,
+            pr: review ? body.pullRequest?.number : undefined,
           })
         }
         pending.delete(id)
@@ -1021,6 +1068,8 @@ export function mountEditor(resolveDom: (doc: Document, manifest: any) => any, c
       }
       updateBar()
       frame.src = config.start
+      // A pull request may have been merged or closed since the last visit.
+      checkReviews().then(() => doc && scan())
     })
 
   return { pending, scan, agent }

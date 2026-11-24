@@ -82,6 +82,20 @@ async function expectJson(res: Response, what: string): Promise<any> {
   throw new GitHubError(res.status, `GitHub: could not ${what} (${hint})`)
 }
 
+export type ReviewState = 'open' | 'merged' | 'closed'
+
+/**
+ * What became of a pull request the editor saved into. Only pull requests from the edits
+ * branch are answered for, so the endpoint cannot be used to look at any other.
+ */
+export async function pullRequestState(gh: GitHubOptions, number: number, fetchImpl: Fetch = fetch): Promise<ReviewState | null> {
+  const res = await client(gh, fetchImpl)('GET', `/pulls/${number}`)
+  if (res.status === 404) return null
+  const pull = await expectJson(res, 'read the pull request')
+  if (pull.head?.ref !== (gh.editsBranch ?? 'torso/edits')) return null
+  return pull.merged || pull.merged_at ? 'merged' : pull.state === 'closed' ? 'closed' : 'open'
+}
+
 /**
  * Production save: apply the edits to the files at the tip of a branch and commit them
  * in one atomic commit. Your deploy branch is only ever moved forward, so a push that

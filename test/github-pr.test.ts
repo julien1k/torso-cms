@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { analyze } from '../src/analyze'
-import { saveToGitHub } from '../src/github'
+import { pullRequestState, saveToGitHub } from '../src/github'
 
 /** An in-memory GitHub with branches and pull requests, enough for both save modes. */
 function fakeGitHub(initial: Record<string, string>) {
@@ -60,6 +60,11 @@ function fakeGitHub(initial: Record<string, string>) {
       pulls.push(pull)
       return reply(201, pull)
     }
+    if (/^\/pulls\/\d+$/.test(route) && method === 'GET') {
+      const pull = pulls.find((p) => p.number === Number(route.split('/').pop()))
+      if (!pull) return reply(404, { message: 'Not Found' })
+      return reply(200, { number: pull.number, state: pull.state === 'merged' ? 'closed' : pull.state, merged: pull.state === 'merged', head: { ref: pull.head } })
+    }
     return reply(404, { message: `unhandled ${method} ${route}` })
   }) as typeof fetch
 
@@ -97,6 +102,20 @@ describe('pull-request mode', () => {
     const third = await saveToGitHub(gh, manifest, [{ id: idOf('Hello'), from: 'Hi', to: 'Hey' }], hub.fetchImpl)
     expect(third.conflicts).toEqual([])
     expect(hub.files('torso/edits')['app/page.tsx']).toContain('<h1>Hey</h1>')
+  })
+
+  it('reports whether its pull request is open, merged or closed', async () => {
+    const hub = fakeGitHub({ 'app/page.tsx': page })
+    await saveToGitHub(gh, manifest, [{ id: idOf('Hello'), from: 'Hello', to: 'Hi' }], hub.fetchImpl)
+    expect(await pullRequestState(gh, 1, hub.fetchImpl)).toBe('open')
+    hub.pulls[0].state = 'closed'
+    expect(await pullRequestState(gh, 1, hub.fetchImpl)).toBe('closed')
+    hub.pulls[0].state = 'merged'
+    expect(await pullRequestState(gh, 1, hub.fetchImpl)).toBe('merged')
+    // Unknown numbers and other people's pull requests are not answered for.
+    expect(await pullRequestState(gh, 99, hub.fetchImpl)).toBe(null)
+    hub.pulls.push({ number: 2, head: 'feature', base: 'main', state: 'open', html_url: '' })
+    expect(await pullRequestState(gh, 2, hub.fetchImpl)).toBe(null)
   })
 
   it('starts a fresh branch from the deploy branch once the last pull request is closed', async () => {
