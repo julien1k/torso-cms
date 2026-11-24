@@ -195,7 +195,7 @@ const limits: { area: string; items: { title: string; body: string }[] }[] = [
     items: [
       {
         title: "This is early software",
-        body: "Torso is not on npm yet. It has been tested in Chromium, with a thorough unit-test suite for the parts that write files. Saving in production has been tested against a simulated GitHub, not yet in a live deployment.",
+        body: "Torso is not on npm yet. It has been tested in Chromium, with a thorough unit-test suite for the parts that write files. Saving in production has been tested against a simulated GitHub, and on this site's own live deployment.",
       },
     ],
   },
