@@ -4,7 +4,7 @@
   "description": "Zero-schema visual editing for Next.js: click text on the page, save it back to the source.",
   "license": "MIT",
   "author": "Julien Kollmann",
-  "homepage": "https://torso-cms.vercel.app",
+  "homepage": "https://www.torso-cms.com",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/julien1k/torso-cms.git"
