@@ -127,6 +127,21 @@ export function mountEditor(resolveDom: (doc: Document, manifest: any) => any, c
     manifest = await res.json()
   }
 
+  /**
+   * React checks the server's text against its own when it hydrates, and rebuilds the page
+   * if they differ. So text is only replaced on an element React has already taken over.
+   * Where React has started but not reached the element yet, that is waited for; a page
+   * React never touches gets a few seconds' grace instead.
+   */
+  let loadedAt = 0
+  const marked = (node: object, prefix: string) => Object.keys(node).some((key) => key.startsWith(prefix))
+  const settled = (el: Element | null) => {
+    if (!el || marked(el, '__reactFiber$')) return true
+    let owned = !!doc && marked(doc, '__react')
+    for (let up = el.parentElement; up && !owned; up = up.parentElement) owned = marked(up, '__react')
+    return Date.now() - loadedAt > (owned ? 60000 : 10000)
+  }
+
   function scan() {
     if (!doc || !doc.body) return
     if (editing) {
@@ -152,6 +167,7 @@ export function mountEditor(resolveDom: (doc: Document, manifest: any) => any, c
     }
 
     const result = resolveDom(doc, manifest)
+    let waiting = false
     textHits = new Map()
     linkHits = new Map()
     originalText = new Map()
@@ -169,7 +185,9 @@ export function mountEditor(resolveDom: (doc: Document, manifest: any) => any, c
       const live = published.get(t.entry.id)
       originalText.set(t.node, live ? live.to : t.node.data)
       const shown = pending.get(t.entry.id)?.to ?? live?.to
-      if (shown != null) t.node.data = shown || ZWSP
+      if (shown == null) continue
+      if (settled(t.node.parentElement)) t.node.data = shown || ZWSP
+      else waiting = true
     }
     for (const l of result.links) {
       if (!l.entry) continue
@@ -178,7 +196,9 @@ export function mountEditor(resolveDom: (doc: Document, manifest: any) => any, c
       const live = published.get(l.entry.id)
       originalHref.set(l.el, live ? live.to : l.href)
       const shown = pending.get(l.entry.id)?.to ?? live?.to
-      if (shown != null) l.el.setAttribute('href', shown)
+      if (shown == null) continue
+      if (settled(l.el)) l.el.setAttribute('href', shown)
+      else waiting = true
     }
     flush()
     syncAddress()
@@ -195,6 +215,7 @@ export function mountEditor(resolveDom: (doc: Document, manifest: any) => any, c
     }
     schedulePoll()
     updateBar()
+    if (waiting) queueScan()
   }
 
   /** While a deploy is pending, check now and then whether the new build has arrived. */
@@ -641,6 +662,7 @@ export function mountEditor(resolveDom: (doc: Document, manifest: any) => any, c
     overlaid = false
     closePopover()
     showHover(null)
+    loadedAt = Date.now()
     scan()
   }
 
