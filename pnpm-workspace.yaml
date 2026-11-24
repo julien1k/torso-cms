@@ -6,3 +6,9 @@ ignoredBuiltDependencies:
   - sharp
   - unrs-resolver
   - esbuild
+# @next/mdx imports Next's types without declaring Next as a peer. Without this it finds the
+# copy installed for the torso-cms package itself, whose types do not match the site's.
+packageExtensions:
+  "@next/mdx":
+    peerDependencies:
+      next: "*"
