@@ -4,7 +4,7 @@ Click-to-edit for Next.js, saved back to your code.
 
 Torso is a visual editor with no schema, no content files and no wrapper components. It finds the text and links written in your components, lets you edit them on the live page, and writes the change back to the source file: to disk in development, as a GitHub commit or pull request in production.
 
-> **Status: early.** Torso is not published to npm yet. It has been tested in Chromium, and production saving has been tested against a simulated GitHub API and on the project site's own live deployment on Vercel. Every known limit is listed in [Status and limits](#status-and-limits).
+> **Status: early.** It has been tested in Chromium, and production saving has been tested against a simulated GitHub API and on the project site's own live deployment on Vercel. Every known limit is listed in [Status and limits](#status-and-limits).
 
 ## How it works
 

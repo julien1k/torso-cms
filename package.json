@@ -3,6 +3,27 @@
   "version": "0.0.1",
   "description": "Zero-schema visual editing for Next.js: click text on the page, save it back to the source.",
   "license": "MIT",
+  "author": "Julien Kollmann",
+  "homepage": "https://torso-cms.vercel.app",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/julien1k/torso-cms.git"
+  },
+  "bugs": "https://github.com/julien1k/torso-cms/issues",
+  "keywords": [
+    "cms",
+    "visual-editor",
+    "click-to-edit",
+    "inline-editing",
+    "nextjs",
+    "react",
+    "vite",
+    "git",
+    "headless",
+    "content",
+    "mdx",
+    "i18n"
+  ],
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
@@ -26,7 +47,8 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "tsc -p tsconfig.json --watch",
-    "test": "vitest run"
+    "test": "vitest run",
+    "prepublishOnly": "pnpm build && pnpm test"
   },
   "dependencies": {
     "@babel/parser": "^7.26.0",
