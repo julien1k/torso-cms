@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Analytics } from "@vercel/analytics/next";
 import { GeistMono } from "geist/font/mono";
 import { GeistSans } from "geist/font/sans";
 import { GeistPixelSquare } from "geist/font/pixel/square";
@@ -42,6 +43,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         </a>
         {children}
         <AgentBridge />
+        <Analytics />
       </body>
     </html>
   );
