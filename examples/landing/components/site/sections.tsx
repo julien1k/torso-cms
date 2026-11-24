@@ -4,6 +4,7 @@ import { ArrowRightIcon } from "lucide-react";
 import { preparedSamples } from "@/lib/demo-prepared";
 import { pages, statusPage } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
+import { repositoryUrl } from "@/lib/site";
 import { CopyPrompt } from "./copy-prompt";
 import { PixelCanvas } from "./pixel-canvas";
 import { PixelGlyph, type GlyphName } from "./pixel-glyph";
@@ -349,6 +350,12 @@ export function Footer() {
               {page.label}
             </Link>
           ))}
+          <a
+            href={repositoryUrl}
+            className="rounded-sm outline-none transition-colors duration-150 hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50"
+          >
+            GitHub
+          </a>
         </nav>
         <p>Open source under the MIT license.</p>
       </div>

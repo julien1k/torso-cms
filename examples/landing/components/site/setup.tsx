@@ -52,7 +52,7 @@ export function Setup() {
           />
           <pre data-reveal className="mt-8 overflow-x-auto rounded-xl border bg-black/25 px-4 py-3 font-mono text-sm">
             <code translate="no">
-              <span className="select-none text-mark">$ </span>pnpm add torso-cms
+              <span className="select-none text-mark">$ </span>pnpm add github:julien1k/torso-cms
             </code>
           </pre>
           <p data-reveal className="mt-8">

@@ -19,5 +19,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
+      - name: The committed build matches the source
+        run: git diff --exit-code -- dist
       - run: pnpm test
       - run: pnpm --dir examples/landing exec next build

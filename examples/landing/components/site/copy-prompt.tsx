@@ -6,9 +6,9 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 /** What a coding agent needs to add the editor to someone's project. */
-const prompt = `Add Torso, a click-to-edit visual editor, to this Next.js App Router project. Its npm package is called torso-cms.
+const prompt = `Add Torso, a click-to-edit visual editor, to this Next.js App Router project. Its package is called torso-cms and is installed from GitHub.
 
-1. Install the package: pnpm add torso-cms
+1. Install the package: pnpm add github:julien1k/torso-cms (with npm: npm install github:julien1k/torso-cms)
 2. In next.config.ts, import { withCMS } from "torso-cms" and wrap the exported config: export default withCMS(nextConfig). Keep every existing option.
 3. Create app/edit/[[...path]]/route.ts containing:
    import { createCMS } from "torso-cms/server";

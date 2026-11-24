@@ -1,5 +1,7 @@
 node_modules
 dist
+# The built package is committed, so it can be installed straight from GitHub.
+!/dist
 .next
 *.tsbuildinfo
 .torso

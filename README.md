@@ -17,6 +17,12 @@ Torso is a visual editor with no schema, no content files and no wrapper compone
 
 Requires Next.js 16 with the App Router, and Node.js 22.12 or newer.
 
+Install the package from this repository. It is not on npm yet:
+
+```bash
+pnpm add github:julien1k/torso-cms
+```
+
 Wrap your config:
 
 ```ts
